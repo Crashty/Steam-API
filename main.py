@@ -66,7 +66,7 @@ async def process_results(results, apps):
             repeat = [()]
 
             print("Writing output data to file..")
-            with open("output.txt","w", encoding="utf-8") as f:
+            with open("output.json","w", encoding="utf-8") as f:
                 for k, result in enumerate(results):
 
                     if isinstance(result,ClientConnectionError): 
