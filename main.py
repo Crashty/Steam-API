@@ -63,11 +63,13 @@ def app_player_count(appid, raw=False):
 async def process_results(results, apps):
             print("Collecting synchronization apps..")
             data = {"apps":[]}
-            repeat = [()]
+            repeat = []
 
             print("Writing output data to file..")
             with open("output.json","w", encoding="utf-8") as f:
                 for k, result in enumerate(results):
+
+                    
 
                     if isinstance(result,ClientConnectionError): 
                         print("oops")
@@ -77,16 +79,12 @@ async def process_results(results, apps):
                     status = result.status
                     name = apps["applist"]["apps"][k]["name"]
                     appid = apps["applist"]["apps"][k]["appid"]
-
                     if status == 200:
                         result_j = await result.json()
                         data["apps"].append({"name":name,"appid":appid,"players":result_j["response"]["player_count"]})
                     else:
                         data["apps"].append({"name":name,"appid":appid,"error": await result.text(),"url":str(result.url)})
-                        repeat.append((k,result))
                 
-
-                    
                 json.dump(data,f,indent=4,ensure_ascii=False)
 
                 with open("err.txt","w",encoding="utf-8") as ff:
@@ -96,7 +94,7 @@ async def process_results(results, apps):
 
 async def apps_player_count(max=None):
 
-    #download_apps()
+    download_apps()
     apps = load_apps()
     current = 0
     tasks = []
@@ -123,4 +121,4 @@ async def apps_player_count(max=None):
 
         await process_results(results, apps)
 
-asyncio.run(apps_player_count(5000))
+asyncio.run(apps_player_count())
