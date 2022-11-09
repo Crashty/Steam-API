@@ -4,11 +4,12 @@ import json
 import asyncio
 from tqdm import tqdm
 
+key = ""
 
-key = "12D3DF35DFCF4DA85DA50C945EEA447F"
+with open("key.txt","r") as f:
+    key = f.read()
 
 pbar = None
-invalid = 0
 
 def steam_request(interface, method, version, params=None, raw=False):
     url = f"http://api.steampowered.com/{interface}/{method}/v{version}/?key={key}&format=json{params}"
