@@ -4,10 +4,14 @@ import json
 import asyncio
 from tqdm import tqdm
 
+
 key = ""
 
-with open("key.txt","r") as f:
-    key = f.read()
+try:
+    with open("key.txt","r") as f:
+        key = f.read()
+except:
+    print("Could not retrieve steam-api key. Ensure key.txt exists.")
 
 pbar = None
 
