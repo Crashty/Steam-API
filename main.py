@@ -83,7 +83,7 @@ async def update_tasks(repeat):
     old_data = None
 
     with open("output.json","r",encoding="utf-8") as f:
-        old_data = json.load(f)
+        old_data = json.loads(f.read())
 
 
     for result in tqdm(results):
