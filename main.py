@@ -5,15 +5,14 @@ import asyncio
 from tqdm import tqdm
 
 
-key = ""
+key = None
 
 try:
-    with open("key.txt","r") as f:
-        key = f.read()
+    with open("key.txt","r") as c:
+        key = c.read()
 except:
     print("Could not retrieve steam-api key. Ensure key.txt exists.")
-
-pbar = None
+    exit(1)
 
 def steam_request(interface, method, version, params=None, raw=False):
     url = f"http://api.steampowered.com/{interface}/{method}/v{version}/?key={key}&format=json{params}"
@@ -22,10 +21,9 @@ def steam_request(interface, method, version, params=None, raw=False):
     response = requests.get(url)
     return response
 
-async def a_steam_request(session: ClientSession, url):
+async def a_steam_request(session: ClientSession, url, bar):
     response = await session.get(url)
-
-    pbar.update(1)
+    bar.update(1)
     return response
     
     
@@ -58,12 +56,13 @@ def app_getid(name):
     
     return None
 
-def app_player_count(appid, raw=False):
+def app_player_count(appid):
     response = steam_request("ISteamUserStats","GetNumberOfCurrentPlayers",1,params=f"&appid={appid}")
     response_j = json.loads(response.text)
     result = response_j["response"]["result"]
     if result != 1: return 0
     return response_j["response"]["player_count"]
+
 
 async def update_tasks(repeat):
     print(f"{len(repeat)} errors detected, retrying..")
@@ -72,20 +71,29 @@ async def update_tasks(repeat):
     repeat_2 = []
 
     for err in repeat:
-        new_tasks.append(err[1])
+        new_tasks.append(err[1].url)
 
+
+
+    print(f"Resending {len(new_tasks)} requests..")
     pbar = tqdm(total=len(new_tasks),unit="request")
-
     async with ClientSession(timeout=ClientTimeout(total=None)) as session:
-        results = await asyncio.gather(*[a_steam_request(session, url) for url in new_tasks], return_exceptions=True)
+        results = await asyncio.gather(*[a_steam_request(session, url, pbar) for url in new_tasks], return_exceptions=True)
         pbar.close()
 
     old_data = None
 
-    with open("output.json","r",encoding="utf-8") as f:
-        old_data = json.loads(f.read())
 
 
+    print("Reading output..")
+    with open("output.json","r", encoding="utf-8") as f:   
+        with open("copy.json","w",encoding="utf-8") as ff:
+            ff.write(f.read())
+        with open("copy2.json","w",encoding="utf-8") as fff:
+            fff.write(f.read())
+        old_data = json.load(f)
+
+    print("Adjusting results..")
     for result in tqdm(results):
 
         k = None
@@ -115,13 +123,11 @@ async def update_tasks(repeat):
             if "429 Too Many Requests" in txt or "You don't have permission to access" in txt:
                 repeat_2.append((k,result))
 
+        print("Writing new results..")
         with open("output_v2.json","w",encoding="utf-8") as f:
-            print("Writing results to file..")
             json.dump(old_data,f,indent=4,ensure_ascii=False)
 
-        
-    print(f"Done with {len(repeat_2)} errors")
-
+        print(f"Done with {len(repeat_2)} errors")
 
 
 
@@ -140,7 +146,6 @@ async def process_results(results, apps):
 
             pbar.update(1)
             if isinstance(result,ClientConnectionError): 
-                print("oops")
                 repeat.append((k,result))
                 data["apps"].append({"order":k,"error":str(result)})
                 continue
@@ -164,12 +169,15 @@ async def process_results(results, apps):
         print("Writing results to file..")
         json.dump(data,f,indent=4,ensure_ascii=False)
         
+
         if len(repeat):
             with open("err.txt","w",encoding="utf-8") as ff:
                 for err in repeat:
                     ff.write(f"{err}\n")
 
             await update_tasks(repeat)
+
+        print(f"Done with {len(repeat)} errors")
 
 
 async def apps_player_count(max=None):
@@ -189,15 +197,13 @@ async def apps_player_count(max=None):
                 break
 
     print(f"Sending requests for {len(tasks)} apps..")
-    global pbar
     pbar = tqdm(total=len(tasks),unit="request")
 
 
     async with ClientSession(timeout=ClientTimeout(total=None)) as session:
-        results = await asyncio.gather(*[a_steam_request(session, url) for url in tasks], return_exceptions=True)
+        results = await asyncio.gather(*[a_steam_request(session, url, pbar) for url in tasks], return_exceptions=True)
         pbar.close()
 
         await process_results(results, apps)
 
-asyncio.run(apps_player_count(10000))
-print("Done")
+asyncio.run(apps_player_count(50000))
