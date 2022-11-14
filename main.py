@@ -86,11 +86,8 @@ async def update_tasks(repeat):
 
 
     print("Reading output..")
-    with open("output.json","r", encoding="utf-8") as f:   
-        with open("copy.json","w",encoding="utf-8") as ff:
-            ff.write(f.read())
-        with open("copy2.json","w",encoding="utf-8") as fff:
-            fff.write(f.read())
+    with open("output.json","r", encoding="utf-8") as f, open("copy.json","w", encoding="utf-8") as ff:
+        ff.write(f.read())
         old_data = json.load(f)
 
     print("Adjusting results..")
@@ -168,16 +165,19 @@ async def process_results(results, apps):
 
         print("Writing results to file..")
         json.dump(data,f,indent=4,ensure_ascii=False)
+
+    if len(repeat):
+        with open("err.txt","w",encoding="utf-8") as ff:
+            for err in repeat:
+                ff.write(f"{err}\n")
+
+        await update_tasks(repeat)
+
+
+    print(f"Done with {len(repeat)} errors")
         
 
-        if len(repeat):
-            with open("err.txt","w",encoding="utf-8") as ff:
-                for err in repeat:
-                    ff.write(f"{err}\n")
 
-            await update_tasks(repeat)
-
-        print(f"Done with {len(repeat)} errors")
 
 
 async def apps_player_count(max=None):
@@ -206,4 +206,4 @@ async def apps_player_count(max=None):
 
         await process_results(results, apps)
 
-asyncio.run(apps_player_count(50000))
+asyncio.run(apps_player_count(10000))
