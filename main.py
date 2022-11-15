@@ -5,7 +5,7 @@ import asyncio
 from tqdm import tqdm
 import math
 import time
-
+import utils
 
 key = None
 nested_sleep = 60*3
@@ -231,4 +231,4 @@ async def apps_player_count(max=None):
 
 t1 = time.time() 
 asyncio.run(apps_player_count())
-print(f"Job's done! {math.floor(time.time()-t1)} seconds and {retries} retries!")
+print(f"Job's done! {utils.time_string(math.floor(time.time()-t1))} seconds and {retries} retries!")
