@@ -8,15 +8,15 @@ import time
 
 
 key = None
-nested_sleep = 25
+nested_sleep = 60*3
 retries = 0
-max_retries = 4
+max_retries = 10
 
 try:
     with open("key.txt","r") as c:
         key = c.read()
 except:
-    print("Could not retrieve steam-api key. Ensure key.txt exists.")
+    print("Could not retrieve steam-api key.. Ensure 'key.txt' exists")
     exit(1)
 
 
@@ -131,7 +131,7 @@ async def update_tasks(repeat):
                 repeat_2.append((k,result))
     pbar.close()
     print("Writing new results..")
-    with open(f"output_v{1+retries}.json","w",encoding="utf-8") as f:
+    with open(f"output.json","w",encoding="utf-8") as f:
         json.dump(old_data,f,indent=4,ensure_ascii=False)
 
     print(f"Done reworking with {len(repeat_2)} errors. {math.floor((1-len(repeat_2)/len(repeat))*100)}% of errors fixed")
@@ -205,7 +205,7 @@ async def process_results(results, apps):
 
 async def apps_player_count(max=None):
 
-    #download_apps()
+    download_apps()
     apps = load_apps()
     current = 0
     tasks = []
