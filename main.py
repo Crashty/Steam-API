@@ -42,14 +42,14 @@ def download_apps():
     response = steam_request("ISteamApps","GetAppList",2)
     response_j = response.json()
 
-    with open("applist.json","w",encoding="utf-8") as f:
+    with open("output/applist.json","w",encoding="utf-8") as f:
         f.write(json.dumps(response_j,indent=4))
 
     print("Download complete, 'applist.json' saved")
 
 def load_apps():
     try:
-        with open("applist.json", "r") as f:
+        with open("output/applist.json", "r") as f:
             applist = json.load(f)
             return applist
 
@@ -98,17 +98,15 @@ async def update_tasks(repeat):
 
 
     print("Reading output..")
-    with open("output.json","r", encoding="utf-8") as f:
+    with open("output/output.json","r", encoding="utf-8") as f:
         old_data = json.load(f)
 
     print("Adjusting results..")
     pbar = tqdm(total=len(results),unit="result")
     for i, result in enumerate(results):
+
         pbar.update(1)
         k = repeat[i][0]
-
-
-        
 
         if isinstance(result,ClientConnectionError) or isinstance(result,failure):
             id = old_data["apps"][k]["appid"]
@@ -129,9 +127,10 @@ async def update_tasks(repeat):
             old_data["apps"][k] = {"order":k,"name":name,"appid":appid,"error": txt,"url":url}
             if "429 Too Many Requests" in txt or "You don't have permission to access" in txt:
                 repeat_2.append((k,result))
+
     pbar.close()
     print("Writing new results..")
-    with open(f"output.json","w",encoding="utf-8") as f:
+    with open("output/output.json","w",encoding="utf-8") as f:
         json.dump(old_data,f,indent=4,ensure_ascii=False)
 
     print(f"Done reworking with {len(repeat_2)} errors. {math.floor((1-len(repeat_2)/len(repeat))*100)}% of errors fixed")
@@ -152,7 +151,7 @@ async def process_results(results, apps):
     repeat = []
 
     
-    with open("output.json","w", encoding="utf-8") as f:
+    with open("output/output.json","w", encoding="utf-8") as f:
 
 
         print("Synchronizing results to apps..")
@@ -162,19 +161,18 @@ async def process_results(results, apps):
             pbar.update(1)
 
             
+            name = apps["applist"]["apps"][k]["name"]
+            appid = apps["applist"]["apps"][k]["appid"]
 
             if isinstance(result,ClientConnectionError) or isinstance(result,failure):
-                id = apps["applist"]["apps"][k]["appid"]
                 url = steam_request("ISteamUserStats","GetNumberOfCurrentPlayers",1,params=f"&appid={id}",raw=True)
                 repeat.append((k,failure(url)))
-                data["apps"].append({"order":k,"error":str(result)})
+                data["apps"].append({"order":k,"error":str(result),"appid":appid,"name":name})
                 continue
 
 
             status = result.status
-            name = apps["applist"]["apps"][k]["name"]
-            appid = apps["applist"]["apps"][k]["appid"]
-            
+ 
             if status == 200:
                 result_j = await result.json()
                 data["apps"].append({"order":k,"name":name,"appid":appid,"players":result_j["response"]["player_count"]})
@@ -192,7 +190,7 @@ async def process_results(results, apps):
         json.dump(data,f,indent=4,ensure_ascii=False)
 
     if len(repeat):
-        with open("err.txt","w",encoding="utf-8") as ff:
+        with open("output/err.txt","w",encoding="utf-8") as ff:
             for err in repeat:
                 ff.write(f"{err}\n")
 
@@ -231,4 +229,4 @@ async def apps_player_count(max=None):
 
 t1 = time.time() 
 asyncio.run(apps_player_count())
-print(f"Job's done! {utils.time_string(math.floor(time.time()-t1))} seconds and {retries} retries!")
+print(f"Job's done! {utils.time_string(math.floor(time.time()-t1))} and {retries} retries!")

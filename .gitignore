@@ -1,11 +1,5 @@
-apilist.json
-applist.json
-analyze.py
-err.txt
-output.json
+__pycache__/utils.cpython-311.pyc
 key.txt
-test.py
-copy.json
-output_v2.json
-output_v3.json
-output_v4.json
+output/applist.json
+output/err.txt
+output/output.json
