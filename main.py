@@ -107,12 +107,14 @@ async def update_tasks(repeat):
         pbar.update(1)
         k = repeat[i][0]
 
-        if isinstance(result,ClientConnectionError): 
-            url = steam_request("ISteamUserStats","GetNumberOfCurrentPlayers",1,params=f"&appid={appid}",raw=True)
-            repeat_2.append((k,failure(url)))
-            print("\noops")
-            continue
+
         
+
+        if isinstance(result,ClientConnectionError) or isinstance(result,failure):
+            id = old_data["apps"][k]["appid"]
+            url = steam_request("ISteamUserStats","GetNumberOfCurrentPlayers",1,params=f"&appid={id}",raw=True)
+            repeat_2.append((k,failure(url)))
+            continue
         
         status = result.status
         name = old_data["apps"][k]["name"]
@@ -160,18 +162,18 @@ async def process_results(results, apps):
             pbar.update(1)
 
             
-            name = apps["applist"]["apps"][k]["name"]
-            appid = apps["applist"]["apps"][k]["appid"]
 
-            if isinstance(result,ClientConnectionError): 
-                url = steam_request("ISteamUserStats","GetNumberOfCurrentPlayers",1,params=f"&appid={appid}",raw=True)
+            if isinstance(result,ClientConnectionError) or isinstance(result,failure):
+                id = apps["applist"]["apps"][k]["appid"]
+                url = steam_request("ISteamUserStats","GetNumberOfCurrentPlayers",1,params=f"&appid={id}",raw=True)
                 repeat.append((k,failure(url)))
                 data["apps"].append({"order":k,"error":str(result)})
-                print("\noops")
                 continue
 
 
             status = result.status
+            name = apps["applist"]["apps"][k]["name"]
+            appid = apps["applist"]["apps"][k]["appid"]
             
             if status == 200:
                 result_j = await result.json()
