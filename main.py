@@ -138,7 +138,7 @@ async def update_tasks(repeat):
     if len(repeat_2):
 
         if retries != max_retries:
-            print(f"Retrying in {nested_sleep} seconds..")
+            print(f"Retrying in {utils.time_string(nested_sleep)}..")
             time.sleep(nested_sleep)
             await update_tasks(repeat_2)
         else:
