@@ -8,7 +8,7 @@ import time
 import utils
 
 key = None
-nested_sleep = 60*3
+nested_sleep = 60*5
 retries = 0
 max_retries = 10
 
